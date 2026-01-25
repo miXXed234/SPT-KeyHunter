@@ -18,7 +18,7 @@ namespace KeyHunter
         public override string ModGuid { get; init; }  = "com.keyhunter.spt40";
         public override string Name { get; init; } = "KeyHunter";
         public override string Author { get; init; } = "miXXed";
-        public override Version Version { get; init; } = new("1.0.0");
+        public override Version Version { get; init; } = new("1.0.1");
         public override string? Url { get; init; } = "https://github.com/miXXed234/SPT-KeyHunter";
         public override Range SptVersion { get; init; } = new("~4.0");
         public override bool? IsBundleMod { get; init; } = false;
