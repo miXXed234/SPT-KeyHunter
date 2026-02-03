@@ -66,17 +66,10 @@ namespace KeyHunter
                     return Task.CompletedTask;
                 }
 
-                _logger.LogInformation("[KeyHunter] Initializing v2.0.0...");
-                _logger.LogInformation("[KeyHunter] Features enabled:");
-                _logger.LogInformation("  - Key Routing: {Enabled}", config.EnableKeyRouting);
-                _logger.LogInformation("  - Progressive System: {Enabled}", config.EnableProgressiveSystem);
-                _logger.LogInformation("  - Price Adjustment: {Enabled}", config.EnablePriceAdjustment);
-                _logger.LogInformation("  - Debug Logging: {Enabled}", config.DebugLogging);
-
                 _priceAdjustmentService.AdjustPrices();
                 _lootPatchService.OnPostDBLoad();
 
-                _logger.LogInformation("[KeyHunter] Successfully initialized!");
+                _logger.LogInformation("[KeyHunter] v2.0.0 loaded successfully");
             }
             catch (Exception ex)
             {

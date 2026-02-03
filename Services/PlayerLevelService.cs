@@ -42,7 +42,6 @@ namespace KeyHunter.Services
             if (detectedLevel.HasValue)
             {
                 _cachedLevel = detectedLevel.Value;
-                _logger.LogInformation("[KeyHunter] Auto-detected player level: {Level}", detectedLevel.Value);
                 return detectedLevel.Value;
             }
 

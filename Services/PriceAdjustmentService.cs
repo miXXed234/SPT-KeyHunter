@@ -59,7 +59,6 @@ namespace KeyHunter.Services
                 }
 
                 _pricesAdjusted = true;
-                _logger.LogInformation("[KeyHunter] Adjusted prices for {Count} keys/keycards", adjustedCount);
             }
             catch (System.Exception ex)
             {

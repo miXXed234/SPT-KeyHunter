@@ -43,7 +43,6 @@ namespace KeyHunter.Services
             
             if (!config.Enabled)
             {
-                _logger.LogInformation("[KeyHunter] Mod disabled in config");
                 return;
             }
 
@@ -65,7 +64,6 @@ namespace KeyHunter.Services
                 }
             }
 
-            _logger.LogInformation("[KeyHunter] Loot transformers registered for {Count} locations", locations.Count);
         }
 
         private void HandleStaticLootLazyLoad(string locationId, Dictionary<MongoId, StaticLootDetails>? staticLootData)
