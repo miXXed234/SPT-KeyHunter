@@ -1,7 +1,7 @@
 {
   "enabled": true,
   "debugLogging": false,
-  "forcedPlayerLevel": 15,
+  "forcedPlayerLevel": 0,
   "enableKeyRouting": false,
   "enableProgressiveSystem": true,
   "levelThresholds": {
@@ -36,7 +36,7 @@
   "enablePriceAdjustment": true,
   "fleaPriceMultiplier": 0.75,
   "traderPriceMultiplier": 0.75,
-  "baseKeySpawnChance": 3000.0,
+  "baseKeySpawnChance": 500.0,
   "targetContainers": [
     "578f8778245977358849a9b5",
     "578f87a3245977356274f2cb",
