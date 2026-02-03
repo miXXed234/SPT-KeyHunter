@@ -5,8 +5,8 @@ It increases the spawn rate of keys and keycards in specific containers (Jackets
 
 ## What's New in v2.0.0
 
-- Automatic player level detection - no manual configuration needed
-- 229 keys automatically discovered from the game database
+- Automatic player level detection
+- Keys automatically discovered from the game database
 - Progressive loot system that scales with your level
 - Optional map-based key routing (keys spawn more on their home maps)
 - Price adjustment system to balance the economy
