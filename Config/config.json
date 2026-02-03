@@ -1,0 +1,45 @@
+{
+  "enabled": true,
+  "debugLogging": false,
+  "forcedPlayerLevel": 15,
+  "enableKeyRouting": false,
+  "enableProgressiveSystem": true,
+  "levelThresholds": {
+    "rookieMaxLevel": 10,
+    "survivorMaxLevel": 25,
+    "veteranMaxLevel": 40,
+    "rookieMultipliers": {
+      "common": 1.0,
+      "rare": 0.6,
+      "superRare": 0.3,
+      "keycard": 0.15
+    },
+    "survivorMultipliers": {
+      "common": 1.0,
+      "rare": 0.9,
+      "superRare": 0.6,
+      "keycard": 0.35
+    },
+    "veteranMultipliers": {
+      "common": 1.0,
+      "rare": 1.0,
+      "superRare": 0.8,
+      "keycard": 0.6
+    },
+    "eliteMultipliers": {
+      "common": 1.0,
+      "rare": 1.0,
+      "superRare": 1.0,
+      "keycard": 0.85
+    }
+  },
+  "enablePriceAdjustment": true,
+  "fleaPriceMultiplier": 0.75,
+  "traderPriceMultiplier": 0.75,
+  "baseKeySpawnChance": 3000.0,
+  "targetContainers": [
+    "578f8778245977358849a9b5",
+    "578f87a3245977356274f2cb",
+    "5909e4b686f7747f5b744fa4"
+  ]
+}
