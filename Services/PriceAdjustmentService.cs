@@ -30,13 +30,15 @@ namespace KeyHunter.Services
             var config = _configService.Load();
             if (!config.EnablePriceAdjustment)
             {
-                _logger.LogDebug("[KeyHunter] Price adjustment disabled");
+                if (config.DebugLogging)
+                    _logger.LogDebug("[KeyHunter] Price adjustment disabled");
                 return;
             }
 
             if (_pricesAdjusted)
             {
-                _logger.LogDebug("[KeyHunter] Prices already adjusted");
+                if (config.DebugLogging)
+                    _logger.LogDebug("[KeyHunter] Prices already adjusted");
                 return;
             }
 

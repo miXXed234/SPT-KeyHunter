@@ -36,22 +36,26 @@ namespace KeyHunter.Services
             if (level <= thresholds.RookieMaxLevel)
             {
                 multipliers = thresholds.Rookie;
-                _logger.LogDebug("[KeyHunter] Player level {Level} -> Rookie tier", level);
+                if (config.DebugLogging)
+                    _logger.LogDebug("[KeyHunter] Player level {Level} -> Rookie tier", level);
             }
             else if (level <= thresholds.SurvivorMaxLevel)
             {
                 multipliers = thresholds.Survivor;
-                _logger.LogDebug("[KeyHunter] Player level {Level} -> Survivor tier", level);
+                if (config.DebugLogging)
+                    _logger.LogDebug("[KeyHunter] Player level {Level} -> Survivor tier", level);
             }
             else if (level <= thresholds.VeteranMaxLevel)
             {
                 multipliers = thresholds.Veteran;
-                _logger.LogDebug("[KeyHunter] Player level {Level} -> Veteran tier", level);
+                if (config.DebugLogging)
+                    _logger.LogDebug("[KeyHunter] Player level {Level} -> Veteran tier", level);
             }
             else
             {
                 multipliers = thresholds.Elite;
-                _logger.LogDebug("[KeyHunter] Player level {Level} -> Elite tier", level);
+                if (config.DebugLogging)
+                    _logger.LogDebug("[KeyHunter] Player level {Level} -> Elite tier", level);
             }
 
             if (isKeycard)

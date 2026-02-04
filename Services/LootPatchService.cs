@@ -84,7 +84,9 @@ namespace KeyHunter.Services
             }
 
             sw.Stop();
-            _logger.LogDebug("[KeyHunter] Patched {Containers} containers in {Location} in {Ms}ms", containersPatched, locationId, sw.ElapsedMilliseconds);
+            var debugConfig = _configService.Load();
+            if (debugConfig.DebugLogging)
+                _logger.LogDebug("[KeyHunter] Patched {Containers} containers in {Location} in {Ms}ms", containersPatched, locationId, sw.ElapsedMilliseconds);
         }
 
         private void PatchContainer(string locationId, MongoId containerId, StaticLootDetails containerDetails)
@@ -128,11 +130,12 @@ namespace KeyHunter.Services
 
             containerDetails.ItemDistribution = itemDistributionList;
 
-            _logger.LogDebug(
-                "[KeyHunter] Container {Container}: Added {Added} keys",
-                containerId,
-                keysAdded
-            );
+            if (config.DebugLogging)
+                _logger.LogDebug(
+                    "[KeyHunter] Container {Container}: Added {Added} keys",
+                    containerId,
+                    keysAdded
+                );
         }
 
         private bool IsHomeMapForKey(string currentLocation, KeyInfo keyInfo)

@@ -11,6 +11,7 @@ namespace KeyHunter.Services
         private readonly ConfigService _configService;
         private readonly ILogger<PlayerLevelService> _logger;
         private int? _cachedLevel = null;
+        private string? _cachedProfileId = null;
 
         public PlayerLevelService(
             ConfigService configService,
@@ -22,82 +23,141 @@ namespace KeyHunter.Services
 
         public int GetPlayerLevel()
         {
-            if (_cachedLevel.HasValue)
+            var config = _configService.Load();
+            
+            // Check if cache is still valid (profile hasn't changed)
+            var currentProfileId = GetCurrentActiveProfileId();
+            if (_cachedLevel.HasValue && _cachedProfileId == currentProfileId)
             {
                 return _cachedLevel.Value;
             }
-
-            var config = _configService.Load();
+            
+            // Cache invalid or profile changed - clear and re-detect
+            if (_cachedLevel.HasValue && _cachedProfileId != currentProfileId)
+            {
+                if (config.DebugLogging)
+                    _logger.LogDebug("[KeyHunter] Active profile changed from {Old} to {New}, re-detecting level", _cachedProfileId ?? "none", currentProfileId ?? "none");
+                _cachedLevel = null;
+                _cachedProfileId = null;
+            }
 
             // Priority 1: Forced level from config
             if (config.ForcedPlayerLevel.HasValue && config.ForcedPlayerLevel.Value > 0)
             {
                 _cachedLevel = config.ForcedPlayerLevel.Value;
-                _logger.LogDebug("[KeyHunter] Using forced player level: {Level}", config.ForcedPlayerLevel.Value);
+                _cachedProfileId = "forced";
+                _logger.LogInformation("[KeyHunter] Player level: {Level} (source: forced)", config.ForcedPlayerLevel.Value);
                 return config.ForcedPlayerLevel.Value;
             }
 
             // Priority 2: Auto-detect from profile files
-            var detectedLevel = TryGetPlayerLevelFromProfileFiles();
+            var detectedLevel = TryGetPlayerLevelFromProfileFiles(out var profileSource, out var detectedProfileId);
             if (detectedLevel.HasValue)
             {
                 _cachedLevel = detectedLevel.Value;
+                _cachedProfileId = detectedProfileId;
+                _logger.LogInformation("[KeyHunter] Player level: {Level} (source: {Source})", detectedLevel.Value, profileSource);
                 return detectedLevel.Value;
             }
 
             // Fallback: Default level
             var defaultLevel = 15;
             _cachedLevel = defaultLevel;
-            _logger.LogDebug("[KeyHunter] Using default player level: {Level}", defaultLevel);
+            _cachedProfileId = "default";
+            _logger.LogInformation("[KeyHunter] Player level: {Level} (source: default)", defaultLevel);
             return defaultLevel;
         }
 
-        private int? TryGetPlayerLevelFromProfileFiles()
+        private string? GetCurrentActiveProfileId()
         {
             try
             {
+                var profilesPath = FindProfilesDirectory();
+                if (string.IsNullOrEmpty(profilesPath))
+                    return null;
+                    
+                return TryGetActiveProfileId(profilesPath);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private int? TryGetPlayerLevelFromProfileFiles(out string source, out string? profileId)
+        {
+            source = "unknown";
+            profileId = null;
+            try
+            {
+                var debugConfig = _configService.Load();
+                
                 // Find the profiles directory relative to the mod location
                 var profilesPath = FindProfilesDirectory();
                 if (string.IsNullOrEmpty(profilesPath) || !Directory.Exists(profilesPath))
                 {
-                    _logger.LogDebug("[KeyHunter] Profiles directory not found");
+                    if (debugConfig.DebugLogging)
+                        _logger.LogDebug("[KeyHunter] Profiles directory not found");
                     return null;
                 }
 
+                // Try to get active profile ID from launcher config
+                var activeProfileId = TryGetActiveProfileId(profilesPath);
+                
+                if (!string.IsNullOrEmpty(activeProfileId))
+                {
+                    // Try to load the active profile
+                    var activeProfilePath = Path.Combine(profilesPath, $"{activeProfileId}.json");
+                    if (File.Exists(activeProfilePath))
+                    {
+                        var level = ExtractLevelFromProfileFile(activeProfilePath);
+                        if (level.HasValue)
+                        {
+                            source = $"activeProfile:{activeProfileId}";
+                            profileId = activeProfileId;
+                            if (debugConfig.DebugLogging)
+                                _logger.LogDebug("[KeyHunter] Found active profile level: {Level}", level.Value);
+                            return level.Value;
+                        }
+                    }
+                }
+
+                // Fallback: If no active profile found, use the first valid profile
                 var profileFiles = Directory.GetFiles(profilesPath, "*.json")
                     .Where(f => !Path.GetFileName(f).Equals("activeMods.json", StringComparison.OrdinalIgnoreCase))
                     .ToList();
 
                 if (profileFiles.Count == 0)
                 {
-                    _logger.LogDebug("[KeyHunter] No profile files found");
+                    if (debugConfig.DebugLogging)
+                        _logger.LogDebug("[KeyHunter] No profile files found");
                     return null;
                 }
 
-                int maxLevel = 0;
                 foreach (var profileFile in profileFiles)
                 {
                     try
                     {
                         var level = ExtractLevelFromProfileFile(profileFile);
-                        if (level.HasValue && level.Value > maxLevel)
+                        if (level.HasValue)
                         {
-                            maxLevel = level.Value;
-                            _logger.LogDebug("[KeyHunter] Found profile with level: {Level} in {File}", level.Value, Path.GetFileName(profileFile));
+                            var detectedId = Path.GetFileNameWithoutExtension(profileFile);
+                            profileId = detectedId;
+                            source = $"firstProfile:{detectedId}";
+                            if (debugConfig.DebugLogging)
+                                _logger.LogDebug("[KeyHunter] Using first available profile with level: {Level}", level.Value);
+                            return level.Value;
                         }
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogDebug("[KeyHunter] Failed to read profile {File}: {Error}", Path.GetFileName(profileFile), ex.Message);
+                        if (debugConfig.DebugLogging)
+                            _logger.LogDebug("[KeyHunter] Failed to read profile {File}: {Error}", Path.GetFileName(profileFile), ex.Message);
                     }
                 }
 
-                if (maxLevel > 0)
-                {
-                    return maxLevel;
-                }
-
-                _logger.LogDebug("[KeyHunter] No valid player levels found in profile files");
+                if (debugConfig.DebugLogging)
+                    _logger.LogDebug("[KeyHunter] No valid player levels found in profile files");
                 return null;
             }
             catch (Exception ex)
@@ -105,6 +165,48 @@ namespace KeyHunter.Services
                 _logger.LogWarning("[KeyHunter] Failed to auto-detect player level: {Error}", ex.Message);
                 return null;
             }
+        }
+
+        private string? TryGetActiveProfileId(string profilesPath)
+        {
+            try
+            {
+                // Try to find launcher config in parent directory
+                var launcherConfigPath = Path.Combine(Path.GetDirectoryName(profilesPath) ?? "", "launcher", "config.json");
+                if (File.Exists(launcherConfigPath))
+                {
+                    var json = File.ReadAllText(launcherConfigPath);
+                    using var doc = JsonDocument.Parse(json);
+                    
+                    if (doc.RootElement.TryGetProperty("activeProfileId", out var profileId))
+                    {
+                        return profileId.GetString();
+                    }
+                }
+
+                // Alternative: Try to find most recently modified profile file
+                var profileFiles = Directory.GetFiles(profilesPath, "*.json")
+                    .Where(f => !Path.GetFileName(f).Equals("activeMods.json", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                if (profileFiles.Count > 0)
+                {
+                    var mostRecent = profileFiles
+                        .Select(f => new { Path = f, LastWrite = File.GetLastWriteTime(f) })
+                        .OrderByDescending(x => x.LastWrite)
+                        .First();
+                    
+                    return Path.GetFileNameWithoutExtension(mostRecent.Path);
+                }
+            }
+            catch (Exception ex)
+            {
+                var debugConfig = _configService.Load();
+                if (debugConfig.DebugLogging)
+                    _logger.LogDebug("[KeyHunter] Failed to get active profile ID: {Error}", ex.Message);
+            }
+
+            return null;
         }
 
         private string? FindProfilesDirectory()
@@ -126,7 +228,9 @@ namespace KeyHunter.Services
                 var fullPath = Path.GetFullPath(path);
                 if (Directory.Exists(fullPath))
                 {
-                    _logger.LogDebug("[KeyHunter] Found profiles directory: {Path}", fullPath);
+                    var debugConfig = _configService.Load();
+                    if (debugConfig.DebugLogging)
+                        _logger.LogDebug("[KeyHunter] Found profiles directory: {Path}", fullPath);
                     return fullPath;
                 }
             }
@@ -154,6 +258,7 @@ namespace KeyHunter.Services
         public void ClearCache()
         {
             _cachedLevel = null;
+            _cachedProfileId = null;
         }
     }
 }

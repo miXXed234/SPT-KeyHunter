@@ -33,7 +33,6 @@ namespace KeyHunter.Services
             }
 
             _configPath = configPath ?? "config.json";
-            _logger.LogDebug("[KeyHunter] Config path: {Path}", _configPath);
         }
 
         public ModConfig Load()
@@ -64,7 +63,6 @@ namespace KeyHunter.Services
                 var config = JsonSerializer.Deserialize<ModConfig>(json, options);
                 _cachedConfig = config ?? new ModConfig();
                 
-                _logger.LogDebug("[KeyHunter] Config loaded successfully");
                 return _cachedConfig;
             }
             catch (System.Exception ex)
@@ -78,7 +76,11 @@ namespace KeyHunter.Services
         public void Reload()
         {
             _cachedConfig = null;
-            _logger.LogDebug("[KeyHunter] Config cache cleared");
+        }
+
+        public bool IsDebugLoggingEnabled()
+        {
+            return Load().DebugLogging;
         }
     }
 }

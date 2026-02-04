@@ -18,7 +18,7 @@ namespace KeyHunter
         public override string ModGuid { get; init; }  = "com.keyhunter.spt40";
         public override string Name { get; init; } = "KeyHunter";
         public override string Author { get; init; } = "miXXed";
-        public override Version Version { get; init; } = new("2.0.0");
+        public override Version Version { get; init; } = new("2.0.1");
         public override string? Url { get; init; } = "https://github.com/miXXed234/SPT-KeyHunter";
         public override Range SptVersion { get; init; } = new("~4.0");
         public override bool? IsBundleMod { get; init; } = false;
@@ -66,10 +66,21 @@ namespace KeyHunter
                     return Task.CompletedTask;
                 }
 
+                // Log config status only when debug logging is enabled
+                if (config.DebugLogging)
+                {
+                    var configStatus = $"debugLogging={config.DebugLogging}";
+                    if (config.ForcedPlayerLevel.HasValue && config.ForcedPlayerLevel.Value > 0)
+                    {
+                        configStatus += $", forcedPlayerLevel={config.ForcedPlayerLevel.Value}";
+                    }
+                    _logger.LogInformation("[KeyHunter] Config: {Status}", configStatus);
+                }
+
                 _priceAdjustmentService.AdjustPrices();
                 _lootPatchService.OnPostDBLoad();
 
-                _logger.LogInformation("[KeyHunter] v2.0.0 loaded successfully");
+                _logger.LogInformation("[KeyHunter] v2.0.1 loaded successfully");
             }
             catch (Exception ex)
             {
